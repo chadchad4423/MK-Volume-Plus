@@ -75,6 +75,8 @@ com.chad.mkvolumeplus
 
 **v1.1.0**
 
+v1.1.0 is the first public release of MK Volume+. v1.0.0 was an internal development milestone and was not publicly released.
+
 Android version metadata:
 
 versionCode = 2
