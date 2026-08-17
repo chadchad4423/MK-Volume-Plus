@@ -10,8 +10,8 @@ It was designed specifically for the Kompakt and its MediaTek audio stack.
 
 ## Features
 
-- Earpiece Volume Unlock — up to **+6 dB** above the stock maximum
-- Speakerphone Volume Unlock — up to **+7 dB** above the stock maximum
+- Earpiece Volume Unlock — up to +6 dB above the stock maximum
+- Speakerphone Volume Unlock — up to +7 dB above the stock maximum
 - Changes take effect during an active call
 - Optional automatic reapply after reboot
 - One-time safety warning before Volume Unlock is first enabled
@@ -43,7 +43,7 @@ Use the lowest comfortable volume.
 
 ## How it works
 
-MK Volume+ modifies the Kompakt's **runtime** MediaTek call-volume parameter tables.
+MK Volume+ modifies the Kompakt's runtime MediaTek call-volume parameter tables.
 
 For the earpiece, the stock maximum uses:
 
@@ -63,11 +63,11 @@ MK Volume+ uses:
 
 These changes are runtime-only. MK Volume+ does **not** permanently rewrite the device's vendor audio calibration files.
 
-Because the runtime audio tables return to stock after reboot, the optional **Reapply after reboot** feature restores the user's enabled Volume Unlock settings after Android finishes booting.
+Because the runtime audio tables return to stock after reboot, the optional Reapply after reboot feature restores the user's enabled Volume Unlock settings after Android finishes booting.
 
 ## Installation
 
-Download the APK from the project's GitHub **Releases** page and install it on the Mudita Kompakt.
+Download the APK from the project's GitHub Releases page and install it on the Mudita Kompakt.
 
 Android may ask you to allow installation from the application you use to open the APK.
 
