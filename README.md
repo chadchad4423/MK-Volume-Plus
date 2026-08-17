@@ -1,4 +1,8 @@
-# MK Volume+
+<p align="center">
+  <img src="app/src/main/ic_launcher-playstore.png" width="128" alt="MK Volume+ app icon">
+</p>
+
+<h1 align="center">MK Volume+</h1>
 
 MK Volume+ is a small Android utility for the **Mudita Kompakt** that unlocks a louder maximum in-call volume for the earpiece and speakerphone.
 
