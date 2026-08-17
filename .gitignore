@@ -1,0 +1,23 @@
+*.iml
+
+.gradle/
+**/build/
+
+local.properties
+
+.idea/
+
+.DS_Store
+
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Generated release packages
+/app/release/
+*.apk
+*.aab
+
+# Never commit signing material
+*.jks
+*.keystore
