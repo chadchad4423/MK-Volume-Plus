@@ -1,15 +1,19 @@
-package com.chad.kompaktaudioprobe
+package com.mkvolumeplus
 
 import android.media.AudioManager
 import android.os.Bundle
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,10 +24,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,14 +42,27 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mudita.mmd.ThemeMMD
+import com.mudita.mmd.components.lazy.LazyColumnMMD
+import com.mudita.mmd.components.menus.DropdownMenuItemMMD
+import com.mudita.mmd.components.menus.DropdownMenuMMD
+import com.mudita.mmd.components.text.TextMMD
+import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -101,6 +122,10 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf("")
                 }
 
+                var currentScreen by remember {
+                    mutableStateOf(AppScreen.MAIN)
+                }
+
                 val reapplyPending =
                     reapplyAfterBoot &&
                             currentBootCount >= 0 &&
@@ -122,7 +147,12 @@ class MainActivity : ComponentActivity() {
                         message = ""
                     }.onFailure { error ->
                         message =
-                            "Read failed: ${error.message}"
+                            getString(
+                                R.string.error_read_failed,
+                                error.message ?: getString(
+                                    R.string.error_unknown_detail
+                                )
+                            )
                     }
                 }
 
@@ -140,8 +170,12 @@ class MainActivity : ComponentActivity() {
                         refreshState()
                     }.onFailure { error ->
                         message =
-                            "Earpiece change failed: " +
-                                    "${error.message}"
+                            getString(
+                                R.string.error_earpiece_change_failed,
+                                error.message ?: getString(
+                                    R.string.error_unknown_detail
+                                )
+                            )
                     }
                 }
 
@@ -159,8 +193,12 @@ class MainActivity : ComponentActivity() {
                         refreshState()
                     }.onFailure { error ->
                         message =
-                            "Speakerphone change failed: " +
-                                    "${error.message}"
+                            getString(
+                                R.string.error_speakerphone_change_failed,
+                                error.message ?: getString(
+                                    R.string.error_unknown_detail
+                                )
+                            )
                     }
                 }
 
@@ -182,20 +220,36 @@ class MainActivity : ComponentActivity() {
                     refreshState()
                 }
 
+                BackHandler(
+                    enabled = currentScreen != AppScreen.MAIN
+                ) {
+                    currentScreen = AppScreen.MAIN
+                }
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = Color.White,
                     contentColor = Color.Black
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        MuditaTopAppBar(
-                            title = "MK Volume+",
-                            version = "v1.1"
-                        )
+                    when (currentScreen) {
+                        AppScreen.MAIN -> Column(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            MuditaTopAppBar(
+                                title = stringResource(
+                                    R.string.product_name
+                                ),
+                                onMenuSelection =
+                                    if (pendingSafetyUnlock == null) {
+                                        { destination ->
+                                            currentScreen = destination
+                                        }
+                                    } else {
+                                        null
+                                    }
+                            )
 
-                        if (pendingSafetyUnlock != null) {
+                            if (pendingSafetyUnlock != null) {
                             SafetyWarningContent(
                                 onCancel = {
                                     pendingSafetyUnlock = null
@@ -221,8 +275,8 @@ class MainActivity : ComponentActivity() {
                                             Unit
                                     }
                                 }
-                            )
-                        } else {
+                                )
+                            } else {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -232,7 +286,9 @@ class MainActivity : ComponentActivity() {
                                     )
                             ) {
                                 SectionHeading(
-                                    text = "Volume Unlock"
+                                    text = stringResource(
+                                        R.string.volume_unlock_title
+                                    )
                                 )
 
                                 Spacer(
@@ -242,9 +298,13 @@ class MainActivity : ComponentActivity() {
                                 Text(
                                     text =
                                         if (reapplyPending) {
-                                            "Please wait while call volume settings are restored."
+                                            stringResource(
+                                                R.string.volume_restore_wait
+                                            )
                                         } else {
-                                            "Unlocks a louder maximum volume for calls."
+                                            stringResource(
+                                                R.string.volume_unlock_description
+                                            )
                                         },
                                     fontSize = 16.sp,
                                     lineHeight = 20.sp,
@@ -258,19 +318,27 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 SettingsSwitchRow(
-                                    title = "Earpiece",
+                                    title = stringResource(
+                                        R.string.earpiece
+                                    ),
                                     detail =
                                         if (reapplyPending) {
-                                            "Restoring after reboot"
+                                            stringResource(
+                                                R.string.restoring_after_reboot
+                                            )
                                         } else {
                                             when (
                                                 audioState.earpiece
                                             ) {
                                                 ProfileState.UNKNOWN ->
-                                                    "Status unknown"
+                                                    stringResource(
+                                                        R.string.status_unknown
+                                                    )
 
                                                 else ->
-                                                    "Up to +6 dB"
+                                                    stringResource(
+                                                        R.string.earpiece_gain
+                                                    )
                                             }
                                         },
                                     checked =
@@ -302,19 +370,27 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 SettingsSwitchRow(
-                                    title = "Speakerphone",
+                                    title = stringResource(
+                                        R.string.speakerphone
+                                    ),
                                     detail =
                                         if (reapplyPending) {
-                                            "Restoring after reboot"
+                                            stringResource(
+                                                R.string.restoring_after_reboot
+                                            )
                                         } else {
                                             when (
                                                 audioState.speakerphone
                                             ) {
                                                 ProfileState.UNKNOWN ->
-                                                    "Status unknown"
+                                                    stringResource(
+                                                        R.string.status_unknown
+                                                    )
 
                                                 else ->
-                                                    "Up to +7 dB"
+                                                    stringResource(
+                                                        R.string.speakerphone_gain
+                                                    )
                                             }
                                         },
                                     checked =
@@ -356,7 +432,9 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 SectionHeading(
-                                    text = "Startup"
+                                    text = stringResource(
+                                        R.string.startup
+                                    )
                                 )
 
                                 Spacer(
@@ -365,9 +443,13 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 SettingsSwitchRow(
-                                    title = "Reapply after reboot",
+                                    title = stringResource(
+                                        R.string.reapply_after_reboot
+                                    ),
                                     detail =
-                                        "Reapply enabled volume unlocks",
+                                        stringResource(
+                                            R.string.reapply_description
+                                        ),
                                     checked = reapplyAfterBoot,
                                     enabled = true,
                                     onCheckedChange = { enabled ->
@@ -415,8 +497,33 @@ class MainActivity : ComponentActivity() {
                                             FontWeight.Normal
                                     )
                                 }
+                                }
                             }
                         }
+
+                        AppScreen.ABOUT -> InformationScreen(
+                            onBack = {
+                                currentScreen = AppScreen.MAIN
+                            }
+                        )
+
+                        AppScreen.LIMITATIONS -> LimitationsScreen(
+                            onBack = {
+                                currentScreen = AppScreen.MAIN
+                            }
+                        )
+
+                        AppScreen.PRIVACY -> PrivacyPolicyScreen(
+                            onBack = {
+                                currentScreen = AppScreen.MAIN
+                            }
+                        )
+
+                        AppScreen.LICENSE -> LicenseScreen(
+                            onBack = {
+                                currentScreen = AppScreen.MAIN
+                            }
+                        )
                     }
                 }
             }
@@ -432,6 +539,283 @@ class MainActivity : ComponentActivity() {
 private enum class PendingUnlock {
     EARPIECE,
     SPEAKERPHONE
+}
+
+@Composable
+private fun InformationScreen(
+    onBack: () -> Unit
+) {
+    ThemeMMD {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            MmdDocumentTopAppBar(
+                title = stringResource(R.string.about_title),
+                onBack = onBack
+            )
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    TextMMD(
+                        text = stringResource(
+                            R.string.about_version,
+                            stringResource(R.string.version_name)
+                        ),
+                        fontSize = 16.sp,
+                        lineHeight = 22.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                    TextMMD(
+                        text = stringResource(
+                            R.string.about_contact,
+                            stringResource(R.string.contact_email)
+                        ),
+                        fontSize = 16.sp,
+                        lineHeight = 22.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                ) {
+                    TextMMD(
+                        text = stringResource(R.string.made_in_louisiana),
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp)
+                    )
+                    Image(
+                        painter = painterResource(
+                            R.drawable.louisiana_bayou
+                        ),
+                        contentDescription = stringResource(
+                            R.string.louisiana_scene_description
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(BAYOU_ASPECT_RATIO),
+                        contentScale = ContentScale.FillWidth
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LimitationsScreen(
+    onBack: () -> Unit
+) {
+    val paragraphs = listOf(
+        stringResource(
+            R.string.limitations_paragraph_1,
+            stringResource(R.string.product_name)
+        ),
+        stringResource(R.string.limitations_paragraph_2),
+        stringResource(
+            R.string.limitations_paragraph_3,
+            stringResource(R.string.reapply_after_reboot)
+        ),
+        stringResource(R.string.limitations_paragraph_4)
+    )
+
+    ThemeMMD {
+        Column(modifier = Modifier.fillMaxSize()) {
+            MmdDocumentTopAppBar(
+                title = stringResource(R.string.limitations_title),
+                onBack = onBack
+            )
+
+            LazyColumnMMD(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = 20.dp,
+                        top = 8.dp,
+                        end = 20.dp,
+                        bottom = 8.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                scrollStep = 1
+            ) {
+                items(paragraphs) { paragraph ->
+                    MmdDocumentParagraph(text = paragraph)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrivacyPolicyScreen(
+    onBack: () -> Unit
+) {
+    val productName = stringResource(R.string.product_name)
+    val paragraphs = listOf(
+        stringResource(R.string.privacy_effective_date),
+        stringResource(
+            R.string.privacy_paragraph_1,
+            productName
+        ),
+        stringResource(R.string.privacy_paragraph_2),
+        stringResource(R.string.privacy_paragraph_3),
+        stringResource(R.string.privacy_paragraph_4),
+        stringResource(
+            R.string.privacy_paragraph_5,
+            productName
+        ),
+        stringResource(
+            R.string.privacy_paragraph_6,
+            productName
+        ),
+        stringResource(
+            R.string.privacy_paragraph_7,
+            productName
+        ),
+        stringResource(R.string.privacy_paragraph_8)
+    )
+
+    ThemeMMD {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            MmdDocumentTopAppBar(
+                title = stringResource(R.string.privacy_title),
+                onBack = onBack
+            )
+
+            LazyColumnMMD(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = 20.dp,
+                        top = 8.dp,
+                        end = 4.dp,
+                        bottom = 8.dp
+                    ),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(paragraphs) { paragraph ->
+                    MmdDocumentParagraph(text = paragraph)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LicenseScreen(
+    onBack: () -> Unit
+) {
+    ThemeMMD {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            MmdDocumentTopAppBar(
+                title = stringResource(R.string.license_title),
+                onBack = onBack
+            )
+
+            val licenseChunks = splitIntoDocumentItems(
+                stringResource(R.string.mit_license_text)
+            )
+
+            LazyColumnMMD(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = 20.dp,
+                        top = 8.dp,
+                        end = 4.dp,
+                        bottom = 8.dp
+                    ),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(licenseChunks) { chunk ->
+                    MmdDocumentParagraph(text = chunk)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun MmdDocumentTopAppBar(
+    title: String,
+    onBack: () -> Unit
+) {
+    val backDescription = stringResource(R.string.navigation_back)
+
+    TopAppBarMMD(
+        title = {
+            TextMMD(
+                text = title,
+                fontSize = 24.sp,
+                lineHeight = 30.sp,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        navigationIcon = {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.semantics {
+                    contentDescription = backDescription
+                }
+            ) {
+                Canvas(modifier = Modifier.size(24.dp)) {
+                    val centerY = size.height / 2f
+                    val startX = size.width * 0.18f
+                    val endX = size.width * 0.82f
+                    val headX = size.width * 0.46f
+                    val headOffset = size.height * 0.27f
+                    val strokeWidth = 2.dp.toPx()
+
+                    drawLine(
+                        color = Color.Black,
+                        start = Offset(startX, centerY),
+                        end = Offset(endX, centerY),
+                        strokeWidth = strokeWidth,
+                        cap = StrokeCap.Square
+                    )
+                    drawLine(
+                        color = Color.Black,
+                        start = Offset(startX, centerY),
+                        end = Offset(headX, centerY - headOffset),
+                        strokeWidth = strokeWidth,
+                        cap = StrokeCap.Square
+                    )
+                    drawLine(
+                        color = Color.Black,
+                        start = Offset(startX, centerY),
+                        end = Offset(headX, centerY + headOffset),
+                        strokeWidth = strokeWidth,
+                        cap = StrokeCap.Square
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun MmdDocumentParagraph(
+    text: String
+) {
+    TextMMD(
+        text = text,
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
+        fontWeight = FontWeight.Normal
+    )
 }
 
 @Composable
@@ -452,7 +836,7 @@ private fun SafetyWarningContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Warning!",
+                text = stringResource(R.string.warning_title),
                 fontSize = 20.sp,
                 lineHeight = 24.sp,
                 fontWeight = FontWeight.Bold
@@ -463,10 +847,10 @@ private fun SafetyWarningContent(
             )
 
             Text(
-                text =
-                    "MK Volume+ allows call volume to exceed the device’s stock maximum. " +
-                            "High volume may damage the speaker or even damage your hearing. " +
-                            "Use with caution.",
+                text = stringResource(
+                    R.string.safety_warning,
+                    stringResource(R.string.product_name)
+                ),
                 fontSize = 16.sp,
                 lineHeight = 22.sp,
                 fontWeight = FontWeight.Normal
@@ -477,7 +861,7 @@ private fun SafetyWarningContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             WarningActionButton(
-                text = "Cancel",
+                text = stringResource(R.string.action_cancel),
                 primary = false,
                 onClick = onCancel
             )
@@ -487,7 +871,7 @@ private fun SafetyWarningContent(
             )
 
             WarningActionButton(
-                text = "I understand",
+                text = stringResource(R.string.action_acknowledge),
                 primary = true,
                 onClick = onAcknowledge
             )
@@ -550,8 +934,11 @@ private fun WarningActionButton(
 @Composable
 private fun MuditaTopAppBar(
     title: String,
-    version: String
+    onBack: (() -> Unit)? = null,
+    onMenuSelection: ((AppScreen) -> Unit)? = null
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -569,19 +956,71 @@ private fun MuditaTopAppBar(
             horizontalArrangement =
                 Arrangement.SpaceBetween
         ) {
+            if (onBack != null) {
+                TopBarAction(
+                    symbol = "←",
+                    description = stringResource(
+                        R.string.navigation_back
+                    ),
+                    onClick = onBack
+                )
+
+                Spacer(modifier = Modifier.size(8.dp))
+            }
+
             Text(
                 text = title,
+                modifier = Modifier.weight(1f),
                 fontSize = 24.sp,
                 lineHeight = 36.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            Text(
-                text = version,
-                fontSize = 14.sp,
-                lineHeight = 18.sp,
-                fontWeight = FontWeight.Normal
-            )
+            if (onMenuSelection != null) {
+                Spacer(modifier = Modifier.size(8.dp))
+
+                Box {
+                    TopBarAction(
+                        symbol = "⋮",
+                        description = stringResource(
+                            R.string.top_bar_menu_description
+                        ),
+                        onClick = { menuExpanded = true }
+                    )
+                    DropdownMenuMMD(
+                        expanded = menuExpanded,
+                        onDismissRequest = {
+                            menuExpanded = false
+                        },
+                        modifier = Modifier.widthIn(
+                            min = 112.dp,
+                            max = 280.dp
+                        )
+                    ) {
+                        listOf(
+                            R.string.about_title to AppScreen.ABOUT,
+                            R.string.limitations_title to
+                                    AppScreen.LIMITATIONS,
+                            R.string.privacy_menu_title to
+                                    AppScreen.PRIVACY,
+                            R.string.license_menu_title to
+                                    AppScreen.LICENSE
+                        ).forEach { (label, destination) ->
+                            DropdownMenuItemMMD(
+                                text = {
+                                    TextMMD(
+                                        text = stringResource(label)
+                                    )
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    onMenuSelection(destination)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         Box(
@@ -590,6 +1029,62 @@ private fun MuditaTopAppBar(
                 .height(3.dp)
                 .background(Color.Black)
         )
+    }
+}
+
+@Composable
+private fun TopBarAction(
+    symbol: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    val interactionSource =
+        remember { MutableInteractionSource() }
+
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .semantics {
+                contentDescription = description
+            }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Button,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        if (symbol == "⋮") {
+            Canvas(modifier = Modifier.size(24.dp)) {
+                val centerX = size.width / 2f
+                val radius = 2.dp.toPx()
+                val offset = 7.dp.toPx()
+
+                drawCircle(
+                    color = Color.Black,
+                    radius = radius,
+                    center = Offset(centerX, size.height / 2f - offset)
+                )
+                drawCircle(
+                    color = Color.Black,
+                    radius = radius,
+                    center = Offset(centerX, size.height / 2f)
+                )
+                drawCircle(
+                    color = Color.Black,
+                    radius = radius,
+                    center = Offset(centerX, size.height / 2f + offset)
+                )
+            }
+        } else {
+            Text(
+                text = symbol,
+                fontSize = 28.sp,
+                lineHeight = 30.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -742,3 +1237,23 @@ private fun MuditaSwitch(
         }
     }
 }
+
+private enum class AppScreen {
+    MAIN,
+    ABOUT,
+    LIMITATIONS,
+    PRIVACY,
+    LICENSE
+}
+
+private const val BAYOU_ASPECT_RATIO = 1983f / 597f
+private const val MAX_DOCUMENT_ITEM_CHARS = 150
+
+private fun splitIntoDocumentItems(text: String): List<String> =
+    text.split("\n\n").flatMap { paragraph ->
+        if (paragraph.length <= MAX_DOCUMENT_ITEM_CHARS) {
+            listOf(paragraph)
+        } else {
+            paragraph.split(Regex("(?<=[.!?])\\s+"))
+        }
+    }

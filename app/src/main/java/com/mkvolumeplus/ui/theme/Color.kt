@@ -1,4 +1,4 @@
-package com.chad.kompaktaudioprobe.ui.theme
+package com.mkvolumeplus.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

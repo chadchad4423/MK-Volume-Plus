@@ -1,4 +1,4 @@
-package com.chad.kompaktaudioprobe
+package com.mkvolumeplus
 
 import android.content.BroadcastReceiver
 import android.content.Context

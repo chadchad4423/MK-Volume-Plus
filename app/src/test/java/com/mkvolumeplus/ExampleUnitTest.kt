@@ -1,4 +1,4 @@
-package com.chad.kompaktaudioprobe
+package com.mkvolumeplus
 
 import org.junit.Test
 

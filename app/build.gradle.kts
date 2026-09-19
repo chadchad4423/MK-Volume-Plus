@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.chad.kompaktaudioprobe"
+    namespace = "com.mkvolumeplus"
 
     compileSdk {
         version = release(37)
@@ -14,14 +14,18 @@ android {
         applicationId = "com.chad.mkvolumeplus"
         minSdk = 31
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
+        debug {
+            isPseudoLocalesEnabled = true
+        }
+
         release {
             optimization {
                 enable = false
@@ -40,6 +44,7 @@ android {
 }
 
 dependencies {
+    implementation("com.mudita:MMD:1.0.2")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
