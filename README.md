@@ -92,6 +92,10 @@ Android version metadata:
 versionCode = 3
 versionName = 1.2.0
 
+SHA-256 of the signed v1.2.0 APK:
+
+4CCFB5B0FB863AD4EBDD2CFC79AB99273D579227A5EA344F3F0DC8B05C56DDD0
+
 ### Previous release
 
 v1.1.0 was the first public release. v1.0.0 was an internal development
