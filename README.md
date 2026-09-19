@@ -150,6 +150,17 @@ MK Volume Plus is an independent project and is not affiliated with, endorsed by
 
 Increasing audio output above the manufacturer's stock maximum may cause distortion, speaker damage, or hearing damage. Use at your own risk.
 
+## Acknowledgements
+
+MK Volume Plus depends on [**Mudita MMD**](https://github.com/mudita/MMD)
+(Apache License 2.0), Mudita's own UI component library, required by the
+Kompakt e-ink platform this app targets. Full license text:
+[`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+
+The MediaTek call-volume parameter tables this app reads and writes were
+found by probing the device's own `AudioManager` parameter interface
+directly, not sourced from any external write-up.
+
 ## License
 
 MK Volume Plus is released under the MIT License. See LICENSE.
